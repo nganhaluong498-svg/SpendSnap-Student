@@ -34,13 +34,20 @@ type Friend = AppUser & {
 type ReminderTone = "Nhẹ nhàng" | "Vui vẻ" | "Ngắn gọn";
 type SplitMethod = "equal" | "items";
 type PaymentStatus = "Chờ thanh toán" | "Đã trả";
+type EqualSplitConfig = {
+  totalAmount: number;
+  totalPeople: number;
+  payer: string;
+};
 
 const billName = "Lẩu Thái Dookki";
-const billTotal = "600.000đ";
-const billPeopleCount = 6;
+const initialEqualSplit: EqualSplitConfig = {
+  payer: "Nguyễn Minh Anh",
+  totalAmount: 600000,
+  totalPeople: 6,
+};
+const billPeopleCount = initialEqualSplit.totalPeople;
 const billFriendCount = 5;
-const splitAmount = "100.000đ";
-const amountToCollect = "500.000đ";
 const billFriendIds: FriendId[] = [
   "ngan-ha",
   "nhat-ha",
@@ -73,6 +80,30 @@ function getPaymentStatus(friendId: FriendId): PaymentStatus {
   return paidFriendIds.has(friendId) ? "Đã trả" : "Chờ thanh toán";
 }
 
+const vndFormatter = new Intl.NumberFormat("vi-VN");
+
+function formatVnd(amount: number) {
+  return `${vndFormatter.format(Math.max(0, Math.round(amount)))}đ`;
+}
+
+function parseVndInput(value: string) {
+  const digits = value.replace(/[^\d]/g, "");
+  return digits ? Number(digits) : 0;
+}
+
+function getEqualSplitSummary(totalAmount: number, totalPeople: number) {
+  const safePeople = Math.max(totalPeople, 1);
+  const hasRemainder = totalAmount % safePeople !== 0;
+  const perPersonAmount = Math.round(totalAmount / safePeople);
+  const amountToCollectValue = Math.max(totalAmount - perPersonAmount, 0);
+
+  return {
+    amountToCollectValue,
+    hasRemainder,
+    perPersonAmount,
+  };
+}
+
 const itemSplitRows = [
   { amount: "300.000đ", item: "Lẩu Thái Dookki", owners: "Món chung" },
   { amount: "60.000đ", item: "Nước ngọt", owners: "Ngân Hà, Nhật Hà" },
@@ -82,23 +113,34 @@ const itemSplitRows = [
   { amount: "30.000đ", item: "Phí dịch vụ", owners: "Chia đều" },
 ];
 
-const recalculatedSplit = [
-  ["Nguyễn Minh Anh", splitAmount],
-  ["Ngân Hà", splitAmount],
-  ["Nhật Hà", splitAmount],
-  ["Quỳnh Anh", splitAmount],
-  ["Bảo Tâm", splitAmount],
-  ["Đình Tâm", splitAmount],
-];
+function getRecalculatedSplit(splitAmountText: string) {
+  return [
+    ["Nguyễn Minh Anh", splitAmountText],
+    ["Ngân Hà", splitAmountText],
+    ["Nhật Hà", splitAmountText],
+    ["Quỳnh Anh", splitAmountText],
+    ["Bảo Tâm", splitAmountText],
+    ["Đình Tâm", splitAmountText],
+  ];
+}
 
-const reminderMessages: Record<ReminderTone, string> = {
-  "Nhẹ nhàng":
-    "Nhật Hà ơi, phần bill Lẩu Thái Dookki của bạn là 100.000đ nha. Chuyển mình qua MoMo khi tiện nhé 🙌",
-  "Vui vẻ": "Đồng bọn ơi, bill Dookki tới rồi 😆 Mỗi người 100.000đ nha.",
-  "Ngắn gọn": "Bill Lẩu Thái Dookki: 100.000đ/người.",
-};
+function getReminderMessages(splitAmountText: string): Record<ReminderTone, string> {
+  return {
+    "Nhẹ nhàng": `Nhật Hà ơi, phần bill Lẩu Thái Dookki của bạn là ${splitAmountText} nha. Chuyển mình qua MoMo khi tiện nhé 🙌`,
+    "Vui vẻ": `Đồng bọn ơi, bill Dookki tới rồi 😆 Mỗi người ${splitAmountText} nha.`,
+    "Ngắn gọn": `Bill Lẩu Thái Dookki: ${splitAmountText}/người.`,
+  };
+}
 
-function ReceiptPreview() {
+function ReceiptPreview({
+  billTotalText,
+  splitAmountText,
+  totalPeople,
+}: {
+  billTotalText: string;
+  splitAmountText: string;
+  totalPeople: number;
+}) {
   return (
     <div className="relative min-h-[170px] rounded-[22px] border border-momo-border bg-white p-4 shadow-[0_14px_28px_rgba(17,24,39,0.06)]">
       <div className="absolute left-0 right-0 top-0 h-3 rounded-t-[22px] bg-[linear-gradient(135deg,transparent_8px,#fff_0),linear-gradient(225deg,transparent_8px,#fff_0)] bg-[length:16px_16px] bg-repeat-x" />
@@ -113,15 +155,15 @@ function ReceiptPreview() {
       <div className="mt-5 space-y-2 text-sm">
         <div className="flex justify-between border-b border-dashed border-slate-200 pb-2">
           <span className="text-momo-muted">Tổng bill</span>
-          <span className="font-extrabold text-momo-text">{billTotal}</span>
+          <span className="font-extrabold text-momo-text">{billTotalText}</span>
         </div>
         <div className="flex justify-between border-b border-dashed border-slate-200 pb-2">
           <span className="text-momo-muted">Số người</span>
-          <span className="font-extrabold text-momo-text">{billPeopleCount} người</span>
+          <span className="font-extrabold text-momo-text">{totalPeople} người</span>
         </div>
         <div className="flex justify-between">
           <span className="text-momo-muted">Gợi ý</span>
-          <span className="font-extrabold text-momo-primary">{splitAmount}/người</span>
+          <span className="font-extrabold text-momo-primary">{splitAmountText}/người</span>
         </div>
       </div>
     </div>
@@ -129,15 +171,23 @@ function ReceiptPreview() {
 }
 
 function NewBillCard({
+  amountToCollectText,
+  billTotalText,
   onOpenFriends,
+  onOpenEqualSplit,
   onOpenSplitItems,
   onOpenUpload,
-  setSplitMethod,
+  splitAmountText,
+  totalPeople,
 }: {
+  amountToCollectText: string;
+  billTotalText: string;
+  onOpenEqualSplit: () => void;
   onOpenFriends: () => void;
   onOpenSplitItems: () => void;
   onOpenUpload: () => void;
-  setSplitMethod: (method: SplitMethod) => void;
+  splitAmountText: string;
+  totalPeople: number;
 }) {
   return (
     <Card className="p-5">
@@ -153,17 +203,21 @@ function NewBillCard({
       </div>
 
       <div className="mt-4 grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <ReceiptPreview />
+        <ReceiptPreview
+          billTotalText={billTotalText}
+          splitAmountText={splitAmountText}
+          totalPeople={totalPeople}
+        />
 
         <div className="min-w-0">
           <div className="grid gap-2 sm:grid-cols-3">
             {[
-              ["Tổng tiền", billTotal],
-              ["AI nhận diện", `Bàn ${billPeopleCount} người`],
-              ["Gợi ý chia", `${splitAmount}/người`],
-              ["Bạn đã ứng", billTotal],
-              ["Phần của bạn", splitAmount],
-              ["Cần thu lại", amountToCollect],
+              ["Tổng tiền", billTotalText],
+              ["AI nhận diện", `Bàn ${totalPeople} người`],
+              ["Gợi ý chia", `${splitAmountText}/người`],
+              ["Bạn đã ứng", billTotalText],
+              ["Phần của bạn", splitAmountText],
+              ["Cần thu lại", amountToCollectText],
             ].map(([label, value]) => (
               <div className="rounded-[16px] border border-slate-100 bg-slate-50 px-3 py-2.5" key={label}>
                 <p className="text-xs font-bold text-momo-muted">{label}</p>
@@ -174,8 +228,8 @@ function NewBillCard({
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => setSplitMethod("equal")} size="sm" variant="secondary">
-                Chia đều
+              <Button onClick={onOpenEqualSplit} size="sm" variant="secondary">
+                Chỉnh chia đều
               </Button>
               <Button onClick={onOpenSplitItems} size="sm" variant="secondary">
                 Chia theo món
@@ -200,12 +254,14 @@ function FriendSelectionDrawer({
   open,
   friends,
   setFriends,
+  splitAmountText,
 }: {
   onClose: () => void;
   onSend: () => void;
   open: boolean;
   friends: Friend[];
   setFriends: (friends: Friend[]) => void;
+  splitAmountText: string;
 }) {
   const [limitMessage, setLimitMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -326,7 +382,7 @@ function FriendSelectionDrawer({
           <div className="rounded-[18px] border border-momo-border bg-momo-soft/55 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
               <span className="font-bold text-momo-text">Đã chọn {selectedCount} bạn</span>
-              <span className="font-bold text-momo-primary">Mỗi người cần trả {splitAmount}</span>
+              <span className="font-bold text-momo-primary">Mỗi người cần trả {splitAmountText}</span>
             </div>
             <p className="mt-2 text-xs font-semibold text-momo-muted">
               Bill {billPeopleCount} người gồm bạn + {billFriendCount} bạn bè. Chọn đúng {billFriendCount} bạn để gửi yêu cầu.
@@ -350,24 +406,250 @@ function FriendSelectionDrawer({
   );
 }
 
+function EqualSplitDrawer({
+  friends,
+  onApply,
+  onClose,
+  open,
+  split,
+}: {
+  friends: Friend[];
+  onApply: (split: EqualSplitConfig) => void;
+  onClose: () => void;
+  open: boolean;
+  split: EqualSplitConfig;
+}) {
+  const participantFriends = getBillFriends(friends);
+  const participantCount = participantFriends.length + 1;
+  const [totalInput, setTotalInput] = useState(formatVnd(split.totalAmount));
+  const [peopleInput, setPeopleInput] = useState(String(split.totalPeople));
+  const [payer, setPayer] = useState(split.payer);
+
+  useEffect(() => {
+    if (!open) return;
+
+    setTotalInput(formatVnd(split.totalAmount));
+    setPeopleInput(String(split.totalPeople));
+    setPayer(split.payer);
+  }, [open, split.payer, split.totalAmount, split.totalPeople]);
+
+  if (!open) return null;
+
+  const totalAmount = parseVndInput(totalInput);
+  const totalPeople = Math.max(1, Number(peopleInput) || 1);
+  const { amountToCollectValue, hasRemainder, perPersonAmount } = getEqualSplitSummary(
+    totalAmount,
+    totalPeople,
+  );
+  const perPersonText = formatVnd(perPersonAmount);
+  const participantRows = [
+    { label: "Bạn", name: "Nguyễn Minh Anh", status: "Người trả trước" },
+    ...participantFriends.map((friend) => ({
+      label: "",
+      name: friend.name,
+      status: getPaymentStatus(friend.id),
+    })),
+  ];
+  const payerOptions = ["Nguyễn Minh Anh", ...participantFriends.map((friend) => friend.name)];
+  const hasValidParticipantCount = totalPeople === participantCount;
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <button
+        aria-label="Đóng lớp phủ"
+        className="absolute inset-0 bg-slate-950/20 backdrop-blur-[1px]"
+        onClick={onClose}
+        type="button"
+      />
+      <aside className="absolute right-0 top-0 flex h-full w-full max-w-[540px] flex-col overflow-hidden border-l border-momo-border bg-white shadow-[0_24px_70px_rgba(17,24,39,0.18)]">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+          <div>
+            <h2 className="text-xl font-extrabold text-momo-text">Chỉnh chia đều</h2>
+            <p className="mt-1 text-sm leading-6 text-momo-muted">
+              Kiểm tra tổng tiền, số người và số tiền mỗi người trước khi gửi yêu cầu.
+            </p>
+          </div>
+          <button
+            aria-label="Đóng"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] text-slate-400 transition hover:bg-momo-soft hover:text-momo-primary"
+            onClick={onClose}
+            type="button"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          <div className="rounded-[22px] border border-momo-border bg-momo-soft/35 p-4">
+            <p className="text-sm font-extrabold text-momo-text">Thông tin bill</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <label className="text-xs font-bold text-momo-muted">
+                Tên bill
+                <input
+                  className="mt-1 h-10 w-full rounded-[14px] border border-slate-200 bg-white px-3 text-sm font-bold text-momo-text outline-none focus:border-momo-primary/40"
+                  readOnly
+                  value={billName}
+                />
+              </label>
+              <label className="text-xs font-bold text-momo-muted">
+                Tổng tiền
+                <input
+                  className="mt-1 h-10 w-full rounded-[14px] border border-slate-200 bg-white px-3 text-sm font-bold text-momo-text outline-none focus:border-momo-primary/40"
+                  inputMode="numeric"
+                  onBlur={() => setTotalInput(formatVnd(totalAmount))}
+                  onChange={(event) => setTotalInput(event.target.value)}
+                  value={totalInput}
+                />
+              </label>
+              <label className="text-xs font-bold text-momo-muted">
+                Số người
+                <input
+                  className="mt-1 h-10 w-full rounded-[14px] border border-slate-200 bg-white px-3 text-sm font-bold text-momo-text outline-none focus:border-momo-primary/40"
+                  inputMode="numeric"
+                  min={1}
+                  onChange={(event) => setPeopleInput(event.target.value)}
+                  type="number"
+                  value={peopleInput}
+                />
+              </label>
+              <label className="text-xs font-bold text-momo-muted">
+                Người trả trước
+                <select
+                  className="mt-1 h-10 w-full rounded-[14px] border border-slate-200 bg-white px-3 text-sm font-bold text-momo-text outline-none focus:border-momo-primary/40"
+                  onChange={(event) => setPayer(event.target.value)}
+                  value={payer}
+                >
+                  {payerOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-[22px] border border-violet-100 bg-violet-50/65 p-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-momo-violet" />
+              <p className="text-sm font-extrabold text-momo-text">Cách tính chia đều</p>
+            </div>
+            <p className="mt-3 text-lg font-extrabold text-momo-text">
+              {formatVnd(totalAmount)} / {totalPeople} người ={" "}
+              <span className="text-momo-primary">{perPersonText}/người</span>
+            </p>
+            {hasRemainder && (
+              <p className="mt-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700">
+                Số tiền lẻ sẽ được làm tròn ở người trả trước
+              </p>
+            )}
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              {[
+                ["Bạn đã ứng", formatVnd(totalAmount)],
+                ["Phần của bạn", perPersonText],
+                ["Cần thu lại", formatVnd(amountToCollectValue)],
+              ].map(([label, value]) => (
+                <div className="rounded-[16px] bg-white px-3 py-2.5" key={label}>
+                  <p className="text-xs font-bold text-momo-muted">{label}</p>
+                  <p className="mt-1 text-sm font-extrabold text-momo-text">{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-[22px] border border-slate-100 bg-white p-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-extrabold text-momo-text">Danh sách chia tiền</p>
+              <span className="rounded-full bg-slate-50 px-2.5 py-1 text-xs font-bold text-momo-muted">
+                {participantCount} người
+              </span>
+            </div>
+            <div className="spendsnap-scrollbar mt-3 max-h-[260px] divide-y divide-slate-100 overflow-y-auto pr-2">
+              {participantRows.map((row) => (
+                <div className="flex h-[58px] items-center gap-3 py-2" key={row.name}>
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-50 text-xs font-extrabold text-momo-text">
+                    {row.name
+                      .split(" ")
+                      .slice(-2)
+                      .map((word) => word[0])
+                      .join("")}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate text-sm font-extrabold text-momo-text">{row.name}</p>
+                      {row.label && (
+                        <span className="rounded-full bg-momo-soft px-2 py-0.5 text-[11px] font-bold text-momo-primary">
+                          {row.label}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-xs font-semibold text-momo-muted">{perPersonText}</p>
+                  </div>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2.5 py-1 text-xs font-bold",
+                      row.status === "Đã trả" && "bg-emerald-50 text-emerald-700",
+                      row.status === "Chờ thanh toán" && "bg-orange-50 text-orange-700",
+                      row.status === "Người trả trước" && "bg-violet-50 text-momo-violet",
+                    )}
+                  >
+                    {row.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p
+            className={cn(
+              "mt-4 rounded-[16px] px-3 py-2 text-sm font-bold",
+              hasValidParticipantCount
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-orange-50 text-orange-700",
+            )}
+          >
+            {hasValidParticipantCount
+              ? "Tổng số người đã khớp với bill"
+              : "Số người chưa khớp với danh sách chia tiền"}
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-3 border-t border-slate-100 px-6 py-4">
+          <Button onClick={onClose} variant="secondary">
+            Hủy
+          </Button>
+          <Button
+            disabled={totalAmount <= 0 || totalPeople <= 0}
+            onClick={() => onApply({ payer, totalAmount, totalPeople })}
+          >
+            Áp dụng chia đều
+          </Button>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
 function SplitParticipantsCard({
   friends,
   onOpenSplitItems,
+  splitAmountText,
   splitMethod,
   setSplitMethod,
 }: {
   friends: Friend[];
   onOpenSplitItems: () => void;
+  splitAmountText: string;
   setSplitMethod: (method: SplitMethod) => void;
   splitMethod: SplitMethod;
 }) {
   const participantFriends = getBillFriends(friends);
   const rows = [
-    ["Nguyễn Minh Anh", "Bạn", splitAmount, "Người trả trước"],
+    ["Nguyễn Minh Anh", "Bạn", splitAmountText, "Người trả trước"],
     ...participantFriends.map((friend) => [
       friend.name,
       "",
-      splitAmount,
+      splitAmountText,
       getPaymentStatus(friend.id),
     ]),
   ];
@@ -537,9 +819,16 @@ function ReminderRecipientsDialog({
   );
 }
 
-function ReminderMessageCard({ friends }: { friends: Friend[] }) {
+function ReminderMessageCard({
+  friends,
+  splitAmountText,
+}: {
+  friends: Friend[];
+  splitAmountText: string;
+}) {
   const [isRecipientDialogOpen, setIsRecipientDialogOpen] = useState(false);
   const recipientFriends = getBillFriends(friends);
+  const reminderMessages = getReminderMessages(splitAmountText);
   const reminderRecipients = recipientFriends.map((friend) => ({
     ...friend,
     paymentStatus: getPaymentStatus(friend.id),
@@ -820,12 +1109,16 @@ function SplitByItemsDrawer({
   onApply,
   onClose,
   open,
+  splitAmountText,
 }: {
   onApply: () => void;
   onClose: () => void;
   open: boolean;
+  splitAmountText: string;
 }) {
   if (!open) return null;
+
+  const recalculatedSplit = getRecalculatedSplit(splitAmountText);
 
   return (
     <div className="fixed inset-0 z-50">
@@ -887,13 +1180,19 @@ function SplitByItemsDrawer({
 }
 
 function UploadBillModal({
+  billTotalText,
   onClose,
   onContinue,
   open,
+  splitAmountText,
+  totalPeople,
 }: {
+  billTotalText: string;
   onClose: () => void;
   onContinue: () => void;
   open: boolean;
+  splitAmountText: string;
+  totalPeople: number;
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [hasBill, setHasBill] = useState(true);
@@ -985,8 +1284,8 @@ function UploadBillModal({
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {[
                 ["Tên bill", billName],
-                ["Tổng tiền", billTotal],
-                ["Số người", String(billPeopleCount)],
+                ["Tổng tiền", billTotalText],
+                ["Số người", String(totalPeople)],
                 ["Cách chia", "Chia đều"],
               ].map(([label, value]) => (
                 <label className="text-xs font-bold text-momo-muted" key={label}>
@@ -999,7 +1298,7 @@ function UploadBillModal({
               ))}
             </div>
             <p className="mt-4 rounded-[16px] bg-white px-3 py-2 text-sm font-semibold text-momo-text">
-              Gợi ý chia đều: {splitAmount}/người
+              Gợi ý chia đều: {splitAmountText}/người
             </p>
           </div>
         )}
@@ -1017,11 +1316,17 @@ function UploadBillModal({
 
 export function SplitBillPage() {
   const [friends, setFriends] = useState(initialFriends);
+  const [equalSplit, setEqualSplit] = useState<EqualSplitConfig>(initialEqualSplit);
+  const [isEqualDrawerOpen, setIsEqualDrawerOpen] = useState(false);
   const [isFriendDrawerOpen, setIsFriendDrawerOpen] = useState(false);
   const [isSplitDrawerOpen, setIsSplitDrawerOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [splitMethod, setSplitMethod] = useState<SplitMethod>("equal");
   const [toast, setToast] = useState("");
+  const equalSummary = getEqualSplitSummary(equalSplit.totalAmount, equalSplit.totalPeople);
+  const billTotalText = formatVnd(equalSplit.totalAmount);
+  const splitAmountText = formatVnd(equalSummary.perPersonAmount);
+  const amountToCollectText = formatVnd(equalSummary.amountToCollectValue);
 
   function showToast(message: string) {
     setToast(message);
@@ -1054,10 +1359,14 @@ export function SplitBillPage() {
       </div>
 
       <NewBillCard
+        amountToCollectText={amountToCollectText}
+        billTotalText={billTotalText}
+        onOpenEqualSplit={() => setIsEqualDrawerOpen(true)}
         onOpenFriends={() => setIsFriendDrawerOpen(true)}
         onOpenSplitItems={() => setIsSplitDrawerOpen(true)}
         onOpenUpload={() => setIsUploadOpen(true)}
-        setSplitMethod={setSplitMethod}
+        splitAmountText={splitAmountText}
+        totalPeople={equalSplit.totalPeople}
       />
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
@@ -1065,13 +1374,26 @@ export function SplitBillPage() {
           friends={friends}
           onOpenSplitItems={() => setIsSplitDrawerOpen(true)}
           setSplitMethod={setSplitMethod}
+          splitAmountText={splitAmountText}
           splitMethod={splitMethod}
         />
-        <ReminderMessageCard friends={friends} />
+        <ReminderMessageCard friends={friends} splitAmountText={splitAmountText} />
       </div>
 
       <TrackedBillsCard />
 
+      <EqualSplitDrawer
+        friends={friends}
+        onApply={(nextSplit) => {
+          setEqualSplit(nextSplit);
+          setSplitMethod("equal");
+          setIsEqualDrawerOpen(false);
+          showToast("Đã áp dụng chia đều");
+        }}
+        onClose={() => setIsEqualDrawerOpen(false)}
+        open={isEqualDrawerOpen}
+        split={equalSplit}
+      />
       <SplitByItemsDrawer
         onApply={() => {
           setSplitMethod("items");
@@ -1079,11 +1401,15 @@ export function SplitBillPage() {
         }}
         onClose={() => setIsSplitDrawerOpen(false)}
         open={isSplitDrawerOpen}
+        splitAmountText={splitAmountText}
       />
       <UploadBillModal
+        billTotalText={billTotalText}
         onClose={() => setIsUploadOpen(false)}
         onContinue={() => setIsUploadOpen(false)}
         open={isUploadOpen}
+        splitAmountText={splitAmountText}
+        totalPeople={equalSplit.totalPeople}
       />
       <FriendSelectionDrawer
         friends={friends}
@@ -1094,6 +1420,7 @@ export function SplitBillPage() {
         }}
         open={isFriendDrawerOpen}
         setFriends={setFriends}
+        splitAmountText={splitAmountText}
       />
 
       {toast && (
