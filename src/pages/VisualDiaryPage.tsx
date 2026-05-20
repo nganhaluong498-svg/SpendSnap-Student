@@ -566,11 +566,11 @@ export function VisualDiaryPage() {
 
   return (
     <>
-      <div className="mx-auto flex max-w-[1320px] flex-col gap-5">
+      <div className="mx-auto flex max-w-[1320px] flex-col gap-4 sm:gap-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-bold text-momo-primary">SpendSnap Student</p>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-normal text-momo-text">
+            <h1 className="mt-2 text-2xl font-extrabold tracking-normal text-momo-text sm:text-3xl">
               Nhật ký ảnh
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-momo-muted">
@@ -578,9 +578,11 @@ export function VisualDiaryPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Button leftIcon={<Camera className="h-4 w-4" />}>Chụp ảnh mới</Button>
-            <Button leftIcon={<Upload className="h-4 w-4" />} variant="secondary">
+          <div className="grid gap-3 sm:flex sm:flex-wrap sm:items-center">
+            <Button className="w-full sm:w-auto" leftIcon={<Camera className="h-4 w-4" />}>
+              Chụp ảnh mới
+            </Button>
+            <Button className="w-full sm:w-auto" leftIcon={<Upload className="h-4 w-4" />} variant="secondary">
               Upload ảnh
             </Button>
           </div>
@@ -667,7 +669,7 @@ export function VisualDiaryPage() {
       </div>
 
       {selectedPost && selectedOwner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-2 backdrop-blur-sm sm:p-4">
           <button
             aria-label="Đóng trình xem ảnh"
             className="absolute inset-0"
@@ -675,7 +677,7 @@ export function VisualDiaryPage() {
             type="button"
           />
 
-          <div className="relative grid h-[calc(100vh-80px)] max-h-[760px] w-[min(1100px,92vw)] grid-rows-[minmax(220px,38vh)_minmax(0,1fr)] overflow-hidden rounded-[28px] border border-white/40 bg-white shadow-[0_28px_80px_rgba(17,24,39,0.28)] lg:grid-cols-[1.4fr_0.9fr] lg:grid-rows-1">
+          <div className="relative grid h-[calc(100dvh-24px)] max-h-[760px] w-[calc(100vw-16px)] grid-rows-[minmax(190px,34dvh)_minmax(0,1fr)] overflow-hidden rounded-[22px] border border-white/40 bg-white shadow-[0_28px_80px_rgba(17,24,39,0.28)] sm:h-[calc(100vh-80px)] sm:w-[min(1100px,92vw)] sm:rounded-[28px] lg:grid-cols-[1.4fr_0.9fr] lg:grid-rows-1">
             <div className="relative min-h-0 bg-slate-950/5">
               <DiaryImage
                 alt={selectedPost.caption}
@@ -687,7 +689,7 @@ export function VisualDiaryPage() {
             </div>
 
             <div className="flex min-h-0 flex-col overflow-hidden">
-              <div className="shrink-0 flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+              <div className="shrink-0 flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:gap-4 sm:px-5 sm:py-4">
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar user={selectedOwner} />
                   <div className="min-w-0">
@@ -719,8 +721,8 @@ export function VisualDiaryPage() {
                 </button>
               </div>
 
-              <div className="shrink-0 px-5 py-4">
-                <p className="text-lg font-extrabold text-momo-text">{selectedPost.caption}</p>
+              <div className="shrink-0 px-4 py-3 sm:px-5 sm:py-4">
+                <p className="text-base font-extrabold text-momo-text sm:text-lg">{selectedPost.caption}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <span className="rounded-full bg-momo-soft px-3 py-1 text-xs font-extrabold text-momo-primary">
                     {selectedPost.category}
@@ -760,7 +762,7 @@ export function VisualDiaryPage() {
                 </div>
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto border-t border-slate-100 px-5 py-4">
+              <div className="min-h-0 flex-1 overflow-y-auto border-t border-slate-100 px-4 py-3 sm:px-5 sm:py-4">
                 <div className="space-y-4">
                   {selectedComments.map((comment) => {
                     const author = usersById[comment.authorId];
@@ -849,7 +851,7 @@ export function VisualDiaryPage() {
               </div>
 
               <form
-                className="shrink-0 flex gap-2 border-t border-slate-100 bg-white px-5 py-4"
+                className="shrink-0 flex gap-2 border-t border-slate-100 bg-white px-4 py-3 sm:px-5 sm:py-4"
                 onSubmit={submitComment}
               >
                 <input
@@ -862,6 +864,7 @@ export function VisualDiaryPage() {
                 />
                 <Button
                   aria-label="Gửi bình luận"
+                  className="px-3 sm:px-5"
                   disabled={!commentDraft.trim()}
                   rightIcon={<SendHorizontal className="h-4 w-4" />}
                   type="submit"

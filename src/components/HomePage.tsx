@@ -45,7 +45,7 @@ export function HomePage({ onNavigate }: { onNavigate: (page: PageId) => void })
 
   return (
     <>
-      <div className="mx-auto flex max-w-[1320px] flex-col gap-5">
+      <div className="mx-auto flex max-w-[1320px] flex-col gap-4 sm:gap-5">
         <HeroCard />
 
         <div className="grid gap-5 lg:grid-cols-12">

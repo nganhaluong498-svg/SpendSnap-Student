@@ -39,7 +39,7 @@ export function BudgetPage() {
     <div className="mx-auto flex max-w-[1320px] flex-col gap-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold leading-tight tracking-normal text-momo-text">
+          <h1 className="text-2xl font-extrabold leading-tight tracking-normal text-momo-text sm:text-3xl">
             Ngân sách tháng 5
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-momo-muted">
@@ -49,11 +49,12 @@ export function BudgetPage() {
             Một khoản chi luôn được trừ vào 2 lớp: nguồn tiền và danh mục chi tiêu.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setIsSetupOpen(true)}>
+        <div className="grid gap-3 sm:flex sm:flex-wrap">
+          <Button className="w-full sm:w-auto" leftIcon={<Plus className="h-4 w-4" />} onClick={() => setIsSetupOpen(true)}>
             Thêm ngân sách
           </Button>
           <Button
+            className="w-full sm:w-auto"
             leftIcon={<ReceiptText className="h-4 w-4" />}
             onClick={() => openOutsideExpense("manual")}
             variant="secondary"
@@ -115,7 +116,7 @@ export function BudgetPage() {
       <ExpenseImpactDrawer open={isImpactOpen} onClose={() => setIsImpactOpen(false)} />
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-[60] rounded-[18px] border border-emerald-100 bg-white px-4 py-3 text-sm font-bold text-emerald-700 shadow-[0_18px_36px_rgba(17,24,39,0.12)]">
+        <div className="fixed bottom-24 left-3 right-3 z-[60] rounded-[18px] border border-emerald-100 bg-white px-4 py-3 text-center text-sm font-bold text-emerald-700 shadow-[0_18px_36px_rgba(17,24,39,0.12)] sm:left-auto sm:right-6 sm:bottom-6 sm:text-left">
           {toast}
         </div>
       )}

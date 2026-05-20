@@ -23,13 +23,13 @@ const actionPageMap: Record<string, PageId> = {
 
 export function QuickActions({ onNavigate }: { onNavigate: (page: PageId) => void }) {
   return (
-    <section aria-label="Thao tác nhanh" className="grid gap-5 md:grid-cols-3">
+    <section aria-label="Thao tác nhanh" className="grid gap-3 sm:gap-4 md:grid-cols-3">
       {quickActions.map((action) => {
         const Icon = iconMap[action.icon];
 
         return (
           <button
-            className="group flex min-h-[88px] w-full items-center gap-4 rounded-[20px] border border-momo-border/75 bg-white p-4 text-left shadow-[0_10px_26px_rgba(17,24,39,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-momo-primary/20 hover:shadow-lift"
+            className="group flex min-h-[82px] w-full items-center gap-3 rounded-[20px] border border-momo-border/75 bg-white p-3.5 text-left shadow-[0_10px_26px_rgba(17,24,39,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-momo-primary/20 hover:shadow-lift sm:min-h-[88px] sm:gap-4 sm:p-4"
             key={action.id}
             onClick={() => onNavigate(actionPageMap[action.id])}
             type="button"

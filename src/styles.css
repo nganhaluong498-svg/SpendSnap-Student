@@ -34,6 +34,7 @@
 html {
   overflow-x: hidden;
   background: #f8fafc;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -53,8 +54,17 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 button {

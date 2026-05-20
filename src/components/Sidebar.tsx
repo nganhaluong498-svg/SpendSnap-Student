@@ -18,7 +18,7 @@ interface SidebarProps {
   onNavigate: (item: PageId) => void;
 }
 
-const menuItems: Array<{ label: PageId; icon: LucideIcon }> = [
+export const spendSnapNavItems: Array<{ label: PageId; icon: LucideIcon }> = [
   { label: "Tổng quan", icon: LayoutDashboard },
   { label: "AI Spend Camera", icon: Camera },
   { label: "Ngân sách", icon: Wallet },
@@ -54,7 +54,7 @@ export function Sidebar({ activeItem, onNavigate }: SidebarProps) {
         </div>
 
         <nav aria-label="SpendSnap" className="mt-3 space-y-1.5">
-          {menuItems.map((item) => {
+          {spendSnapNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.label === activeItem;
 
